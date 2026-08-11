@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 
+Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "1");
 var builder = WebApplication.CreateBuilder(args);
 
 var databaseProvider = builder.Configuration.GetValue<string>("DatabaseProvider")?.Trim();

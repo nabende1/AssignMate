@@ -15,6 +15,7 @@ COPY --from=build /app/publish ./
 
 ENV ASPNETCORE_URLS=http://*:80
 ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_USE_POLLING_FILE_WATCHER=1
 
 EXPOSE 80
 ENTRYPOINT ["dotnet", "AssignMate.dll"]
