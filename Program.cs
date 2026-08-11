@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
@@ -12,9 +13,11 @@ using System.Data.Common;
 var builder = WebApplication.CreateBuilder(args);
 
 var databaseProvider = builder.Configuration.GetValue<string>("DatabaseProvider")?.Trim();
+var sqlServerConnectionString = builder.Configuration.GetConnectionString("SqlServerConnection")?.Trim().Trim('"');
+var defaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")?.Trim().Trim('"');
 var connectionString = databaseProvider?.Equals("SqlServer", StringComparison.OrdinalIgnoreCase) == true
-    ? builder.Configuration.GetConnectionString("SqlServerConnection") ?? builder.Configuration.GetConnectionString("DefaultConnection")
-    : builder.Configuration.GetConnectionString("DefaultConnection");
+    ? sqlServerConnectionString ?? defaultConnectionString
+    : defaultConnectionString;
 
 if (string.IsNullOrWhiteSpace(connectionString))
 {
