@@ -1,11 +1,32 @@
 ﻿@page "/"
+@inject TaskStore Store
 
 <PageTitle>AssignMate</PageTitle>
 
-<h1>@Title</h1>
+<section class="hero-panel">
+    <div>
+        <p class="eyebrow">YOUR ACADEMIC COMMAND CENTER</p>
+        <h1>Make room for your best work.</h1>
+        <p class="hero-copy">AssignMate keeps every assignment, deadline, and next step in one calm, clear place.</p>
+        <div class="hero-actions">
+            <a class="button button-primary" href="add-task">Add an assignment <span aria-hidden="true">+</span></a>
+            <a class="button button-quiet" href="dashboard">Open dashboard <span aria-hidden="true">→</span></a>
+        </div>
+    </div>
+    <div class="hero-stat" aria-label="Task completion summary">
+        <span class="hero-stat-label">Completion rate</span>
+        <strong>@CompletionRate%</strong>
+        <span class="hero-stat-detail">@Store.Tasks.Count(task => task.IsCompleted) of @Store.Tasks.Count assignments complete</span>
+    </div>
+</section>
 
-<p>Student Task & Assignment Tracker</p>
+<section class="feature-grid" aria-label="AssignMate highlights">
+    <a class="feature-card" href="tasks"><span class="feature-icon coral">01</span><h2>Everything in view</h2><p>See what is due, what is moving, and what can wait.</p></a>
+    <a class="feature-card" href="add-task"><span class="feature-icon mint">02</span><h2>Capture in seconds</h2><p>Add the details that matter without slowing down.</p></a>
+    <a class="feature-card" href="profile"><span class="feature-icon gold">03</span><h2>Make it yours</h2><p>Keep your student profile ready for a focused semester.</p></a>
+</section>
 
 @code {
-    string Title = "AssignMate";
+    protected override async Task OnInitializedAsync() => await Store.InitializeAsync();
+    private int CompletionRate => Store.Tasks.Count == 0 ? 0 : (int)Math.Round(Store.Tasks.Count(task => task.IsCompleted) * 100d / Store.Tasks.Count);
 }

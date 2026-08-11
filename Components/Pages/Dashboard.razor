@@ -1,0 +1,36 @@
+@page "/dashboard"
+@attribute [Authorize]
+@inject TaskStore Store
+
+<PageTitle>Dashboard</PageTitle>
+
+<div class="page-heading">
+	<div><p class="eyebrow">OVERVIEW</p><h1>Good morning, @Store.Profile.Name.Split(' ')[0].</h1><p class="muted">Here is the shape of your semester today.</p></div>
+	<a class="button button-primary" href="add-task">+ Add assignment</a>
+</div>
+
+<section class="metric-grid" aria-label="Task summary">
+	<div class="metric-card"><span class="metric-label">Open tasks</span><strong>@OpenTasks</strong><span class="metric-note">Across all courses</span></div>
+	<div class="metric-card metric-alert"><span class="metric-label">Due soon</span><strong>@DueSoon</strong><span class="metric-note">Within the next 3 days</span></div>
+	<div class="metric-card metric-success"><span class="metric-label">Completed</span><strong>@Completed</strong><span class="metric-note">Keep the momentum</span></div>
+</section>
+
+<section class="split-grid">
+	<div class="panel"><div class="panel-heading"><h2>Next up</h2><a href="tasks">View all</a></div>
+		@foreach (var task in UpcomingTasks)
+		{
+			<div class="task-row"><span class="priority-dot @task.Priority.ToString().ToLowerInvariant()"></span><div><strong>@task.Title</strong><span>@task.Course</span></div><time class="@(task.IsOverdue ? "overdue" : "")">@(task.IsOverdue ? "Overdue" : task.DueDate.ToString("MMM d"))</time></div>
+		}
+		@if (!UpcomingTasks.Any()) { <p class="empty-state">You are all caught up. Nice work.</p> }
+	</div>
+	<div class="panel progress-panel"><div class="panel-heading"><h2>Progress</h2><span class="progress-value">@CompletionRate%</span></div><div class="progress-track"><span style="width: @CompletionRate%"></span></div><p class="muted">A little progress each day adds up.</p><a class="text-link" href="profile">Update your profile →</a></div>
+</section>
+
+@code {
+	protected override async Task OnInitializedAsync() => await Store.InitializeAsync();
+	private IEnumerable<TaskItem> UpcomingTasks => Store.Tasks.Where(task => !task.IsCompleted).OrderBy(task => task.DueDate).Take(4);
+	private int OpenTasks => Store.Tasks.Count(task => !task.IsCompleted);
+	private int DueSoon => Store.Tasks.Count(task => task.IsDueSoon);
+	private int Completed => Store.Tasks.Count(task => task.IsCompleted);
+	private int CompletionRate => Store.Tasks.Count == 0 ? 0 : (int)Math.Round(Completed * 100d / Store.Tasks.Count);
+}

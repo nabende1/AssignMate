@@ -1,0 +1,27 @@
+@page "/tasks"
+@attribute [Authorize]
+@inject TaskStore Store
+
+<PageTitle>My Tasks</PageTitle>
+
+<div class="page-heading"><div><p class="eyebrow">YOUR WORKSPACE</p><h1>My tasks</h1><p class="muted">@FilteredTasks.Count() assignments in your workspace.</p></div><a class="button button-primary" href="add-task">+ Add assignment</a></div>
+
+<div class="toolbar"><input class="search-input" placeholder="Search assignments or courses" aria-label="Search assignments or courses" @bind="SearchTerm" @bind:event="oninput" /><select class="select-input" aria-label="Filter tasks" @bind="StatusFilter"><option value="All">All tasks</option><option value="Open">Open</option><option value="Completed">Completed</option></select><select class="select-input" aria-label="Filter by due date" @bind="DueDateFilter"><option value="All">Any due date</option><option value="Upcoming">Upcoming</option><option value="Overdue">Overdue</option></select></div>
+<div class="task-list panel">
+	@foreach (var task in FilteredTasks)
+	{
+		<article class="task-card @(task.IsCompleted ? "is-complete" : "")"><button class="check-button" title="Mark task @(task.IsCompleted ? "open" : "complete")" @onclick="() => Toggle(task)">@((task.IsCompleted) ? "✓" : "")</button><div class="task-main"><div class="task-title-line"><h2>@task.Title</h2><span class="badge @task.Priority.ToString().ToLowerInvariant()">@task.Priority</span></div><p>@task.Course @if (!string.IsNullOrWhiteSpace(task.Notes)) { <span>· @task.Notes</span> }</p></div><div class="task-due @(task.IsOverdue ? "overdue" : "")"><span>@(task.IsOverdue ? "OVERDUE" : "DUE")</span><strong>@task.DueDate.ToString("MMM d")</strong></div><a class="icon-button" title="Edit task" href="edit-task/@task.Id">✎</a><button class="icon-button" title="Delete task" @onclick="() => Delete(task.Id)">×</button></article>
+	}
+	@if (!FilteredTasks.Any()) { <p class="empty-state">No assignments match that filter.</p> }
+</div>
+
+@code {
+	private string SearchTerm { get; set; } = string.Empty;
+	private string StatusFilter { get; set; } = "All";
+	private string DueDateFilter { get; set; } = "All";
+	private IEnumerable<TaskItem> FilteredTasks => Store.Tasks.Where(Matches).OrderBy(task => task.IsCompleted).ThenBy(task => task.DueDate);
+	private bool Matches(TaskItem task) => (StatusFilter == "All" || (StatusFilter == "Open" && !task.IsCompleted) || (StatusFilter == "Completed" && task.IsCompleted)) && (DueDateFilter == "All" || (DueDateFilter == "Upcoming" && !task.IsOverdue) || (DueDateFilter == "Overdue" && task.IsOverdue)) && (string.IsNullOrWhiteSpace(SearchTerm) || task.Title.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) || task.Course.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase));
+	protected override async Task OnInitializedAsync() => await Store.InitializeAsync();
+	private async Task Toggle(TaskItem task) => await Store.ToggleCompletionAsync(task);
+	private async Task Delete(Guid id) => await Store.DeleteAsync(id);
+}

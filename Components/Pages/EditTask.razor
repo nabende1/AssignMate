@@ -1,0 +1,37 @@
+@page "/edit-task/{TaskId:guid}"
+@attribute [Authorize]
+@inject TaskStore Store
+@inject NavigationManager Navigation
+
+<PageTitle>Edit Assignment</PageTitle>
+
+@if (Task is null)
+{
+    <div class="empty-state panel"><h1>Assignment not found</h1><p class="muted">This assignment may have been removed.</p><a class="button button-primary" href="tasks">Back to tasks</a></div>
+}
+else
+{
+    <div class="page-heading"><div><p class="eyebrow">UPDATE ENTRY</p><h1>Edit assignment</h1><p class="muted">Keep the details and deadline current.</p></div></div>
+    <EditForm Model="Task" OnValidSubmit="SaveTask" class="form-panel panel"><DataAnnotationsValidator /><ValidationSummary />
+        <div class="form-grid"><div class="field full"><label for="title">Assignment title</label><InputText id="title" class="form-control" @bind-Value="Task.Title" /><ValidationMessage For="@(() => Task.Title)" /></div><div class="field"><label for="course">Course</label><InputText id="course" class="form-control" @bind-Value="Task.Course" /><ValidationMessage For="@(() => Task.Course)" /></div><div class="field"><label for="due">Due date</label><InputDate id="due" class="form-control" @bind-Value="Task.DueDate" /></div><div class="field"><label for="priority">Priority</label><InputSelect id="priority" class="form-control" @bind-Value="Task.Priority"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option></InputSelect></div><div class="field"><label for="status">Status</label><InputSelect id="status" class="form-control" @bind-Value="Task.Status"><option value="NotStarted">Not started</option><option value="InProgress">In progress</option><option value="Completed">Completed</option></InputSelect></div><div class="field full"><label for="notes">Notes <span>(optional)</span></label><InputTextArea id="notes" class="form-control" @bind-Value="Task.Notes" rows="4" /></div></div>
+        <p class="form-meta">Last updated @Task.UpdatedAtUtc.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</p><div class="form-actions"><a class="button button-quiet" href="tasks">Cancel</a><button class="button button-primary" type="submit">Save changes</button></div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public Guid TaskId { get; set; }
+    private TaskItem? Task { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Store.InitializeAsync();
+        Task = Store.Tasks.FirstOrDefault(item => item.Id == TaskId);
+    }
+
+    private async Task SaveTask()
+    {
+        if (Task is null) return;
+        await Store.UpdateAsync(Task);
+        Navigation.NavigateTo("/tasks");
+    }
+}

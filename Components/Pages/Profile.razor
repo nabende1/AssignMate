@@ -1,0 +1,17 @@
+@page "/profile"
+@attribute [Authorize]
+@inject TaskStore Store
+
+<PageTitle>Profile</PageTitle>
+
+<div class="page-heading"><div><p class="eyebrow">ACCOUNT</p><h1>My profile</h1><p class="muted">Your details help keep your workspace personal.</p></div></div>
+
+<EditForm Model="Draft" OnValidSubmit="SaveProfile" class="profile-layout"><DataAnnotationsValidator /><div class="profile-card panel"><div class="avatar">@Initials</div><h2>@(string.IsNullOrWhiteSpace(Draft.Name) ? "Your name" : Draft.Name)</h2><p class="muted">@Draft.Email</p><span class="profile-status">Active student</span></div><div class="panel form-panel"><div class="form-grid"><div class="field full"><label for="name">Full name</label><InputText id="name" class="form-control" @bind-Value="Draft.Name" /></div><div class="field full"><label for="email">Email address</label><InputText id="email" type="email" class="form-control" @bind-Value="Draft.Email" /></div><div class="field"><label for="program">Program</label><InputText id="program" class="form-control" @bind-Value="Draft.Program" /></div><div class="field"><label for="semester">Current semester</label><InputText id="semester" class="form-control" @bind-Value="Draft.Semester" /></div></div><div class="form-actions"><button class="button button-primary" type="submit">Save changes</button>@if (Saved) { <span class="save-message">Changes saved</span> }</div></div></EditForm>
+
+@code {
+	private ProfileSettings Draft { get; set; } = new();
+	private bool Saved;
+	private string Initials => string.Join(string.Empty, Draft.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(part => part[0])).ToUpperInvariant();
+	protected override async Task OnInitializedAsync() { await Store.InitializeAsync(); Draft = new ProfileSettings { Name = Store.Profile.Name, Email = Store.Profile.Email, Program = Store.Profile.Program, Semester = Store.Profile.Semester }; }
+	private async Task SaveProfile() { await Store.UpdateProfileAsync(Draft); Saved = true; }
+}

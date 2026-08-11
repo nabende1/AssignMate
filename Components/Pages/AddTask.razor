@@ -1,0 +1,18 @@
+@page "/add-task"
+@attribute [Authorize]
+@inject TaskStore Store
+@inject NavigationManager Navigation
+
+<PageTitle>Add Task</PageTitle>
+
+<div class="page-heading"><div><p class="eyebrow">NEW ENTRY</p><h1>Add an assignment</h1><p class="muted">Give your next piece of work a clear home.</p></div></div>
+
+<EditForm Model="NewTask" OnValidSubmit="SaveTask" class="form-panel panel"><DataAnnotationsValidator /><ValidationSummary />
+	<div class="form-grid"><div class="field full"><label for="title">Assignment title</label><InputText id="title" class="form-control" @bind-Value="NewTask.Title" placeholder="e.g. Final research paper" /><ValidationMessage For="@(() => NewTask.Title)" /></div><div class="field"><label for="course">Course</label><InputText id="course" class="form-control" @bind-Value="NewTask.Course" placeholder="e.g. HIST 204" /><ValidationMessage For="@(() => NewTask.Course)" /></div><div class="field"><label for="due">Due date</label><InputDate id="due" class="form-control" @bind-Value="NewTask.DueDate" /></div><div class="field"><label for="priority">Priority</label><InputSelect id="priority" class="form-control" @bind-Value="NewTask.Priority"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option></InputSelect></div><div class="field full"><label for="notes">Notes <span>(optional)</span></label><InputTextArea id="notes" class="form-control" @bind-Value="NewTask.Notes" rows="4" placeholder="Add a useful next step or context..." /></div></div>
+	<div class="form-actions"><a class="button button-quiet" href="tasks">Cancel</a><button class="button button-primary" type="submit">Save assignment</button></div>
+</EditForm>
+
+@code {
+	private TaskItem NewTask { get; set; } = new();
+	private async Task SaveTask() { await Store.AddAsync(NewTask); Navigation.NavigateTo("/tasks"); }
+}

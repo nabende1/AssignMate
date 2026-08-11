@@ -1,0 +1,48 @@
+@page "/register"
+@attribute [AllowAnonymous]
+
+<PageTitle>Create account | AssignMate</PageTitle>
+
+<section class="auth-shell">
+    <div class="auth-card panel">
+        <p class="eyebrow">START ORGANIZING</p>
+        <h1>Create your account</h1>
+        <p class="muted">A focused home for everything on your academic plate.</p>
+        <form method="post" action="/account/register" class="auth-form">
+            <AntiforgeryToken />
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="auth-error">@ErrorMessage</div>
+            }
+            <div class="field"><label for="name">Full name</label><input id="name" name="name" class="form-control" required maxlength="100" autocomplete="name" /></div>
+            <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" class="form-control" required autocomplete="email" /></div>
+            <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" class="form-control" required minlength="8" autocomplete="new-password" /></div>
+            <button class="button button-primary auth-submit" type="submit">Create account</button>
+        </form>
+        <p class="auth-footer">Already have an account? <a href="login">Sign in</a></p>
+    </div>
+</section>
+
+@code {
+    [Parameter] public string? ErrorMessage { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("error", out var error))
+        {
+            var errorValue = error.ToString();
+            ErrorMessage = errorValue switch
+            {
+                "missing" => "Please complete all registration fields.",
+                "invalid-email" => "Please enter a valid email address.",
+                "password" => "Password must be at least 8 characters.",
+                "duplicate" => "An account with that email already exists.",
+                _ => "Unable to create your account. Please try again."
+            };
+        }
+    }
+
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+}
