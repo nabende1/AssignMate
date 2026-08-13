@@ -55,3 +55,9 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Ignore test project and node build artifacts
+AssignMate.Tests/
+**/AssignMate.Tests/**
+**/bin/
+**/obj/
