@@ -16,6 +16,7 @@ public sealed class TaskStore(ApplicationDbContext database, AuthenticationState
     public IReadOnlyList<TaskItem> Tasks => tasks;
     public ProfileSettings Profile => profile;
 
+    // Loads the authenticated user's tasks and profile once so page components can render consistent data without repeated queries.
     public async Task InitializeAsync()
     {
         if (initialized)
@@ -47,6 +48,7 @@ public sealed class TaskStore(ApplicationDbContext database, AuthenticationState
         initialized = true;
     }
 
+    // Persists a newly created assignment and keeps the in-memory collection synchronized with the current view.
     public async Task AddAsync(TaskItem task)
     {
         EnsureAuthenticated();
@@ -58,6 +60,7 @@ public sealed class TaskStore(ApplicationDbContext database, AuthenticationState
         tasks.Add(task);
     }
 
+    // Updates the stored details for an existing assignment without permitting cross-user edits.
     public async Task UpdateAsync(TaskItem task)
     {
         EnsureAuthenticated();
@@ -74,6 +77,7 @@ public sealed class TaskStore(ApplicationDbContext database, AuthenticationState
         task.UpdatedAtUtc = existing.UpdatedAtUtc;
     }
 
+    // Removes a task from the database and the local cache once the delete action is confirmed.
     public async Task DeleteAsync(Guid id)
     {
         EnsureAuthenticated();
@@ -84,6 +88,7 @@ public sealed class TaskStore(ApplicationDbContext database, AuthenticationState
         tasks.Remove(task);
     }
 
+    // Toggles the completion state while preserving the same record and updating the timestamp for audit purposes.
     public async Task ToggleCompletionAsync(TaskItem task)
     {
         EnsureAuthenticated();
@@ -92,6 +97,7 @@ public sealed class TaskStore(ApplicationDbContext database, AuthenticationState
         await database.SaveChangesAsync();
     }
 
+    // Saves user profile edits to the identity record and keeps the in-memory profile model synchronized.
     public async Task UpdateProfileAsync(ProfileSettings settings)
     {
         EnsureAuthenticated();

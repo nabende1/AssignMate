@@ -6,8 +6,10 @@ namespace AssignMate.Data;
 
 public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
+    // Exposes assignment records for the authenticated user.
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
+    // Defines the task schema so validation, relationships, and query behavior align with the application workflow.
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

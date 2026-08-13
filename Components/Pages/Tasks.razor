@@ -4,6 +4,7 @@
 
 <PageTitle>My Tasks</PageTitle>
 
+<!-- Task list page allows filtering, searching, completion toggling, and deleting assignments for the current user. -->
 <div class="page-heading"><div><p class="eyebrow">YOUR WORKSPACE</p><h1>My tasks</h1><p class="muted">@FilteredTasks.Count() assignments in your workspace.</p></div><a class="button button-primary" href="add-task">+ Add assignment</a></div>
 
 <div class="toolbar"><input class="search-input" placeholder="Search assignments or courses" aria-label="Search assignments or courses" @bind="SearchTerm" @bind:event="oninput" /><select class="select-input" aria-label="Filter tasks" @bind="StatusFilter"><option value="All">All tasks</option><option value="Open">Open</option><option value="Completed">Completed</option></select><select class="select-input" aria-label="Filter by due date" @bind="DueDateFilter"><option value="All">Any due date</option><option value="Upcoming">Upcoming</option><option value="Overdue">Overdue</option></select></div>

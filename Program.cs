@@ -10,9 +10,11 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Common;
 
+// Ensure file watching is reliable in local development so the app responds promptly to source edits.
 Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "1");
 var builder = WebApplication.CreateBuilder(args);
 
+// Select the app database provider and resolve the correct connection string for the active environment.
 var databaseProvider = builder.Configuration.GetValue<string>("DatabaseProvider")?.Trim();
 var sqlServerConnectionString = builder.Configuration.GetConnectionString("SqlServerConnection")?.Trim().Trim('"');
 var defaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")?.Trim().Trim('"');
@@ -25,6 +27,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
     connectionString = "Data Source=assignmate.db";
 }
 
+// Configure the persistence layer so authentication and task records are stored in the chosen database backend.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     if (databaseProvider?.Equals("SqlServer", StringComparison.OrdinalIgnoreCase) == true)
@@ -36,6 +39,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlite(connectionString);
     }
 });
+
+// Add ASP.NET Identity with cookie-based sign-in and enforce the app's account policy requirements.
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
 {
     options.User.RequireUniqueEmail = true;
@@ -55,14 +60,14 @@ builder.Services.AddAuthorization();
 builder.Services.AddAntiforgery();
 builder.Services.AddCascadingAuthenticationState();
 
-// Add services to the container.
+// Register the Blazor UI and shared task state so pages can render interactively and access user-scoped data.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddScoped<TaskStore>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP pipeline for production-safe error handling and request security before application routes are served.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -78,6 +83,8 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+
+// Accept login submissions from the UI, validate the supplied credentials, and redirect the user to the intended page.
 app.MapPost("/account/login", async (HttpContext context, SignInManager<ApplicationUser> signInManager) =>
 {
     var form = await context.Request.ReadFormAsync();
@@ -103,6 +110,8 @@ app.MapPost("/account/login", async (HttpContext context, SignInManager<Applicat
 
     return Results.Redirect("/login?error=invalid");
 }).WithMetadata(new RequireAntiforgeryTokenAttribute());
+
+// Create a new local user account, reject invalid values, and sign the user in immediately after successful registration.
 app.MapPost("/account/register", async (HttpContext context, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager) =>
 {
     var form = await context.Request.ReadFormAsync();
@@ -149,6 +158,8 @@ app.MapPost("/account/register", async (HttpContext context, UserManager<Applica
     await signInManager.SignInAsync(user, isPersistent: false);
     return Results.Redirect("/dashboard");
 }).WithMetadata(new RequireAntiforgeryTokenAttribute());
+
+// End the current authenticated session and return the user to the landing page.
 app.MapPost("/account/logout", async (SignInManager<ApplicationUser> signInManager) =>
 {
     await signInManager.SignOutAsync();
@@ -157,6 +168,7 @@ app.MapPost("/account/logout", async (SignInManager<ApplicationUser> signInManag
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+// Migrate the database at startup while also handling older SQLite files that were created before EF Core migrations existed.
 using (var scope = app.Services.CreateScope())
 {
     var database = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -164,6 +176,7 @@ using (var scope = app.Services.CreateScope())
     await database.Database.MigrateAsync();
 }
 
+// Legacy SQLite databases may be missing migration metadata even though they already contain the app's tables.
 static async Task PrepareLegacySqliteDatabaseAsync(ApplicationDbContext database)
 {
     if (!database.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true)

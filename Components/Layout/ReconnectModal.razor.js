@@ -1,4 +1,4 @@
-// Set up event handlers
+// Register the reconnect modal event handlers.
 const reconnectModal = document.getElementById("components-reconnect-modal");
 reconnectModal.addEventListener("components-reconnect-state-changed", handleReconnectStateChanged);
 
@@ -24,14 +24,14 @@ async function retry() {
     document.removeEventListener("visibilitychange", retryWhenDocumentBecomesVisible);
 
     try {
-        // Reconnect will asynchronously return:
-        // - true to mean success
-        // - false to mean we reached the server, but it rejected the connection (e.g., unknown circuit ID)
-        // - exception to mean we didn't reach the server (this can be sync or async)
+        // Reconnect resolves asynchronously with one of the following outcomes:
+        // - true when the connection is restored successfully
+        // - false when the server is reached but rejects the circuit (for example, an unknown circuit ID)
+        // - an exception when the server is unreachable, either synchronously or asynchronously
         const successful = await Blazor.reconnect();
         if (!successful) {
-            // We have been able to reach the server, but the circuit is no longer available.
-            // We'll reload the page so the user can continue using the app as quickly as possible.
+            // The server is reachable, but the active circuit is no longer available.
+            // The page reloads to restore the session quickly and maintain a stable user experience.
             const resumeSuccessful = await Blazor.resumeCircuit();
             if (!resumeSuccessful) {
                 location.reload();
@@ -40,7 +40,7 @@ async function retry() {
             }
         }
     } catch (err) {
-        // We got an exception, server is currently unavailable
+        // An exception indicates that the server is temporarily unavailable.
         document.addEventListener("visibilitychange", retryWhenDocumentBecomesVisible);
     }
 }
